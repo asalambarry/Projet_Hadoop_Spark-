@@ -30,16 +30,6 @@ services:
       - ./notebooks:/notebooks
       - ./simulate_stream.py:/simulate_stream.py  
 
-
-      - ./hadoop:/opt/hadoop
-      - ./spark:/opt/spark
-      - ./kafka:/opt/kafka
-      - ./zookeeper:/opt/zookeeper
-      - ./hadoop/conf:/opt/hadoop/conf
-      - ./hadoop/logs:/opt/hadoop/logs
-      - ./hadoop/data:/opt/hadoop/data
-      - ./hadoop/tmp:/opt/hadoop/tmp
-      - ./hadoop/hdfs:/opt/hadoop/hdfs
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9870"]
       interval: 30s
