@@ -1,0 +1,30 @@
+# Dossier data à ignorer
+/data/
+/data/*
+# Docker volumes
+hadoop_data/
+kafka_data/
+zookeeper_data/
+mongodb_data/
+ 
+# Python
+__pycache__/
+*.pyc
+*.pyo
+env/
+venv/
+ 
+# Logs
+*.log
+logs/
+ 
+# OS
+.DS_Store
+.env
+ 
+# IDE
+.vscode/
+.idea/
+ 
+# data
+datasets/
