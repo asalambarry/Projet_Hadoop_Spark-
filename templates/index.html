@@ -1,0 +1,414 @@
+{% extends "base.html" %} {% block content %}
+<style>
+    body {
+        background-color: #f0f2f5;
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .card {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        border-radius: 12px;
+        border: none;
+        transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .card-header {
+        background: linear-gradient(45deg, #3498db, #2980b9);
+        color: white;
+        border-radius: 12px 12px 0 0 !important;
+        border: none;
+        padding: 1.25rem;
+    }
+
+    .card-header h5 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    .table {
+        background-color: white;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .table thead th {
+        background: #f8f9fa;
+        border-bottom: 2px solid #dee2e6;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8f9fa;
+        transition: background-color 0.2s ease;
+    }
+
+    .badge {
+        padding: 0.5em 1em;
+        font-size: 0.875rem;
+        border-radius: 6px;
+    }
+
+    #total-predictions,
+    #avg-prediction,
+    #unique-users,
+    #active-users {
+        font-size: 28px;
+        font-weight: 700;
+        color: #2c3e50;
+        text-align: center;
+        margin: 10px 0;
+    }
+
+    .stats-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: #3498db;
+    }
+
+    .main-title {
+        color: #2c3e50;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 2rem;
+        text-align: center;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    /* Animation pour les mises à jour */
+
+    .update-animation {
+        animation: pulse 0.5s ease-in-out;
+    }
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.05);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+</style>
+<!-- Ajouter dans le head -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+<div class="container-fluid mt-4">
+    <h1 class="main-title">Tableau de Bord des Recommandations de Films</h1>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="bi bi-graph-up stats-icon"></i>
+                    <h5 class="card-title">Nombre Total de Prédictions</h5>
+                    <p class="card-text" id="total-predictions">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Note Moyenne</h5>
+                    <p class="card-text" id="avg-prediction">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Utilisateurs Uniques</h5>
+                    <p class="card-text" id="unique-users">-</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Utilisateurs Actifs (24h)</h5>
+                    <p class="card-text" id="active-users">-</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Latest Recommendations -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Dernières Recommandations</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table" id="recommendations-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Utilisateur</th>
+                                    <th>ID Film</th>
+                                    <th>Prédiction</th>
+                                    <th>Horodatage</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Distribution & Activity -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Distribution des Prédictions</h5>
+                </div>
+                <div class="card-body">
+                    <div id="distribution-plot"></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Activité des Utilisateurs (24h)</h5>
+                </div>
+                <div class="card-body">
+                    <div id="activity-plot"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Movies -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Top 10 des Films</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table" id="top-movies-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Film</th>
+                                    <th>Note Moyenne</th>
+                                    <th>Nombre d'Évaluations</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rating Trends -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Tendances des Notes (24h)</h5>
+                </div>
+                <div class="card-body">
+                    <div id="trends-plot"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    function animateUpdate(elementId) {
+        const element = document.getElementById(elementId);
+        element.classList.add('update-animation');
+        setTimeout(() => element.classList.remove('update-animation'), 500);
+    }
+
+    function updateDashboard() {
+        // Update general stats
+        fetch('/api/dashboard-summary')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('total-predictions').textContent = data.total_predictions;
+                document.getElementById('avg-prediction').textContent = data.avg_rating.toFixed(2);
+                document.getElementById('active-users').textContent = data.active_users_24h;
+                ['total-predictions', 'avg-prediction', 'active-users'].forEach(animateUpdate);
+            });
+
+        // Update stats
+        fetch('/api/stats')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('unique-users').textContent = data.unique_users;
+            });
+
+        // Update latest recommendations
+        fetch('/api/latest-recommendations')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const tbody = document.querySelector('#recommendations-table tbody');
+                    tbody.innerHTML = '';
+                    data.data.forEach(rec => {
+                        const date = new Date(rec.timestamp);
+                        tbody.innerHTML += `
+                            <tr>
+                                <td><span class="badge bg-primary">${rec.userId}</span></td>
+                                <td><span class="badge bg-secondary">${rec.movieId}</span></td>
+                                <td><span class="badge bg-success">${rec.prediction.toFixed(2)}</span></td>
+                                <td>${date.toLocaleDateString('fr-FR')} ${date.toLocaleTimeString('fr-FR')}</td>
+                            </tr>
+                        `;
+                    });
+                }
+            });
+
+        // Distribution plot
+        fetch('/api/prediction_distribution')
+            .then(response => response.json())
+            .then(data => {
+                const trace = {
+                    x: data.labels,
+                    y: data.values,
+                    type: 'bar',
+                    marker: {
+                        color: '#007bff',
+                        opacity: 0.7
+                    },
+                    name: 'Distribution des notes'
+                };
+                const layout = {
+                    title: 'Distribution des Notes',
+                    xaxis: {
+                        title: 'Note'
+                    },
+                    yaxis: {
+                        title: 'Nombre de prédictions'
+                    },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: {
+                        size: 12
+                    }
+                };
+                Plotly.newPlot('distribution-plot', [trace], layout);
+            });
+
+        // Activity plot
+        fetch('/api/user-activity')
+            .then(response => response.json())
+            .then(data => {
+                const trace = {
+                    x: data.map(d => d._id),
+                    y: data.map(d => d.count),
+                    type: 'line',
+                    line: {
+                        color: '#28a745',
+                        width: 3
+                    },
+                    name: 'Activité par heure'
+                };
+                const layout = {
+                    title: 'Activité des Utilisateurs',
+                    xaxis: {
+                        title: 'Heure'
+                    },
+                    yaxis: {
+                        title: 'Nombre d\'activités'
+                    },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: {
+                        size: 12
+                    }
+                };
+                Plotly.newPlot('activity-plot', [trace], layout);
+            });
+
+        // Update top movies
+        fetch('/api/top-movies')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const tbody = document.querySelector('#top-movies-table tbody');
+                    tbody.innerHTML = '';
+                    data.data.forEach(movie => {
+                        tbody.innerHTML += `
+                        <tr>
+                            <td>${movie._id}</td>
+                            <td>${movie.average_rating.toFixed(2)}</td>
+                            <td>${movie.total_ratings}</td>
+                        </tr>
+                    `;
+                    });
+                }
+            });
+
+        // Rating trends
+        fetch('/api/rating-trends')
+            .then(response => response.json())
+            .then(data => {
+                const trace = {
+                    x: data.map(d => d._id.hour),
+                    y: data.map(d => d.avg_rating),
+                    type: 'line',
+                    line: {
+                        color: '#dc3545',
+                        width: 3
+                    },
+                    name: 'Note moyenne'
+                };
+                const layout = {
+                    title: 'Évolution des Notes',
+                    xaxis: {
+                        title: 'Heure'
+                    },
+                    yaxis: {
+                        title: 'Note moyenne',
+                        range: [0, 5]
+                    },
+                    paper_bgcolor: 'rgba(0,0,0,0)',
+                    plot_bgcolor: 'rgba(0,0,0,0)',
+                    font: {
+                        size: 12
+                    }
+                };
+                Plotly.newPlot('trends-plot', [trace], layout);
+            });
+    }
+
+    // Mise à jour plus fréquente (toutes les 5 secondes)
+    setInterval(updateDashboard, 5000);
+    updateDashboard();
+
+    // WebSocket pour les mises à jour en temps réel (si disponible)
+    try {
+        const ws = new WebSocket(`ws://${window.location.host}/ws`);
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            updateDashboard();
+        };
+    } catch (e) {
+        console.log('WebSocket non disponible, utilisation du polling');
+    }
+</script>
+{% endblock %}

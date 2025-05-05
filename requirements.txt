@@ -1,0 +1,6 @@
+pyspark==3.5.1
+kafka-python==2.0.2
+jupyter
+numpy
+flask==2.0.1
+plotly==5.3.1

@@ -68,8 +68,7 @@ make clean
 ## 📄 Notebooks & Scripts
 - **spark_kafka_demo.ipynb** : Connects Spark Structured Streaming to a Kafka topic and displays the streamed data.
 - **spark_batch_csv_count.py** : A simple Spark batch job reading a CSV file from HDFS and counting rows.
-## Lien vers les donneés
-https://www.kaggle.com/datasets/grouplens/movielens-20m-dataset
+
 ## 🔔 Notes
 - Hadoop HDFS Web UI: [http://localhost:9870](http://localhost:9870)
 - Ensure you manually create Kafka topics using:

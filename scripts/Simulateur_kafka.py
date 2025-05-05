@@ -6,7 +6,7 @@ import pandas as pd
 
 # Configuration de Kafka
 KAFKA_BROKER = 'localhost:9092'  # Remplacez par l'adresse de votre broker Kafka
-TOPIC_NAME = 'movielens_ratings'
+TOPIC_NAME = 'movieratings'  # Nom du topic Kafka
 
 # Création du producteur Kafka
 producer = KafkaProducer(

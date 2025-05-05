@@ -1,0 +1,86 @@
+version: "3.8"
+
+services:
+  bigdata:
+    build: .
+    container_name: bigdata-container
+    hostname: namenode
+    ports:
+      - "2222:22"       # SSH
+      - "8888:8888"     # Jupyter Notebook
+      - "9870:9870"     # Hadoop NameNode UI
+      - "8088:8088"     # YARN ResourceManager
+      - "8042:8042"     # YARN NodeManager
+      - "19888:19888"   # MapReduce JobHistory
+      - "9092:9092"     # Kafka
+      - "2181:2181"     # Zookeeper
+      - "5001:5001"     # Changé de 5000:5000 à 5001:5001
+    environment:
+      - JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+      - HADOOP_HOME=/opt/hadoop
+      - HADOOP_CONF_DIR=/opt/hadoop/etc/hadoop
+      - SPARK_HOME=/opt/spark
+      - KAFKA_HOME=/opt/kafka
+      - HDFS_NAMENODE_USER=root
+      - HDFS_DATANODE_USER=root
+      - HDFS_SECONDARYNAMENODE_USER=root
+      - YARN_RESOURCEMANAGER_USER=root
+      - YARN_NODEMANAGER_USER=root
+      # Configuration Kafka corrigée
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092
+      - KAFKA_LISTENERS=PLAINTEXT://0.0.0.0:9092
+      - KAFKA_ZOOKEEPER_CONNECT=bigdata-container:2181
+      - KAFKA_CREATE_TOPICS=movieratings:1:1
+      # Configuration Zookeeper
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
+      # Ajout de la configuration MongoDB
+      - MONGODB_PORT=27017
+      - FLASK_APP=/opt/flask/app.py
+      - FLASK_ENV=development
+    volumes:
+      - hadoop_data:/opt/hadoop_data
+      - ./config/kafka:/opt/kafka/config
+      - ./notebooks:/notebooks
+      # Ajout des volumes persistants pour Kafka et Zookeeper
+      - kafka_data:/opt/kafka/data
+      - zookeeper_data:/opt/kafka/zookeeper
+      - mongodb_data:/data/db    # Volume pour MongoDB
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - bigdata-network    # Ajout du réseau au service bigdata
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    networks:
+      - bigdata-network
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+    volumes:
+      - mongodb_data:/data/db
+    command: mongod --auth
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  hadoop_data:
+  kafka_data:
+  zookeeper_data:
+  mongodb_data:
+    driver: local
+
+networks:
+  bigdata-network:
+    driver: bridge
